@@ -1,4 +1,4 @@
-# oidc_reverse_proxy - Reverse Proxy SSO Openid connect
+# Reverse Proxy for SSO Openid connect
 
 __Comming soon ...__
 
