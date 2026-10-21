@@ -2,7 +2,7 @@
 
 __Comming soon ...__
 
-This Golang application for Agréments is used to:
+This Golang application is used to:
 
 * centralize tools on a single entry point (front end)
 * dispatch requests (paths) to the different tools
@@ -12,7 +12,7 @@ This Golang application for Agréments is used to:
 * filter certain “paths” based on incoming IP addresses
 * restrict certain paths to certain users
 * handle the HTTPS protocol and certificate at the front end
-* bypass or patch css, js, image, html requests
+* customize or patch css, js, image, html requests
 * automate a basic login
 * TODO handle centralized logout
   
@@ -58,15 +58,72 @@ Full update
 ## Usage
 Depending on the proxy.yml configuration, the available endpoints are:
 
-For OIDC-client tools
+For OIDC tools
 * https://myhost/frontal/login
 * https://myhost/frontal/logout
-* https://myhost/frontal/callback
+* https://myhost/frontal/callback  
+  
 For end users
 * https://myhost/tools1/…
 * https://myhost/tools2/…
 * https://myhost/tools3/…
-* https://myhost/tools4/…
-For supervision tools (kubernetes)
+* https://myhost/tools4/…  
+  
+For supervision  (kubernetes)
 * https://myhost/healthz/ready
 * https://myhost/healthz/live
+
+# Configuration 
+
+Into proxy.yml, current workdir
+
+```yaml
+# Http Service 
+proxy:
+  listenip: 0.0.0.0
+  port: "8443"
+  protocol: https
+  certfile: server-chain.crt
+  keyfile: server.key
+  usedurl: https://localhost
+  tokensecret: MonPrecieux 
+  agecookie: session           # or age in seconds 43200=12h
+  userheader : REMOTE_USER
+  contextpath : "/frontal"     # for oidc endpoints
+  
+# Auth Openid connect
+openidc:
+  active: false
+  issuer: https://localhost/oidc     # /.well-known/openid-configuration
+  ident: frontal
+  secret: lusseaux
+  loginpath: /frontal/login
+  callback: https://localhost/frontal/callback
+  #postlogout: https://localhost/agrem/vue/home
+  frontlogout: https://localhost/frontal/logout
+  scope: [ "openid", "profile", "email", "role" ]  
+  authmethod: query     # or fragment or form_post 
+  uidfield: sub         # or preferred_username
+  rootca: rootCA.pem
+
+backends:    ## Proxy list , in order 
+  - host : "*.local.loc"
+    path : "/example/"
+    url : "http://back.loc:8080/example/"
+  - path : "/mantis/"
+    url : "http://localhost:8086/mantis/"
+  - path : "/client/"
+    url : "https://agrem.loc:8008/client/"
+  - path : "/oidc/"
+    url : "https://agrem.loc:8008/oidc/"
+
+locations:   ## Filter list , in order 
+  - path : "/exemple/ici/logo.png"
+    phfile : "./files/mon-logo.png"      # place holder file
+  - path : "/openproject/form/login"
+    execjs : "autom_login.js"            # ex: do  Get login + post login with user/pass from oidc
+  - path : "/example"
+    auth : true                         # require authentification (on oidc provider)
+    users : "admin,other"               # only usernames authorized
+    iplist : "10.57.0.0/8|10.57.1.45"   # only source ip range authorized
+```
