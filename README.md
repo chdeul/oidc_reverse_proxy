@@ -1,129 +1,51 @@
-# Reverse Proxy for SSO Openid connect
 
-__Comming soon ...__
+# vue intégration
 
-This Golang application is used to:
+- self maded <embed> html tag, includes .vue,  managed internally
+- js library included into index.html, from resources, already downloaded
 
-* centralize tools on a single entry point (front end)
-* dispatch requests (paths) to the different tools
-* authenticate certain “paths” using openidconnect
-* pass the user identifier to the tool in the request header
-* let other paths through without handling authentication (for APIs)
-* filter certain “paths” based on incoming IP addresses
-* restrict certain paths to certain users
-* handle the HTTPS protocol and certificate at the front end
-* customize or patch css, js, image, html requests
-* automate a basic login
-* TODO handle centralized logout
-  
-Thus, tools that do not natively support openidconnect management (for example Sonatype Nexus OSS) can rely on this proxy, an SSO and an LDAP to manage their web authentication in openidconnect mode, according to the following diagram:
 
-```mermaid
-graph TD;
-    Navigateur --> Reverse-Proxy;
-    Reverse-Proxy -.->|jwt| Navigateur;
-    Reverse-Proxy -.->|login| SSO;
-    Reverse-Proxy --+id-user--> Nexus-OSS; 
-    Reverse-Proxy --token-api--> Nexus-OSS;   
-    Nexus-OSS --> Openldap;
-    SSO --> Openldap
-```
 
-API-mode access (npm, maven, docker, etc.) to Nexus-OSS is handled by an API token created and controlled within Nexus.
+Authentification  (/auth)  login & password
+- data stocké dans users.csv (fichier)
+- login -> JWT Token avec identifiant,profil (jwttoken)
+- JWT renvoyé en cookie dans chaque requete REST axios (app.vue)
+- chaque requete REST : cherche JWT, vérifie si authentifié et profil  (RestApi)
 
-This SSO reverse proxy is simpler to configure and deploy than an Apache2 Httpd with OIDC modules, or Nginx, or LemonLdap, etc.
+Static ( /ressources /vues/ )
+- Html,js,css,img,vue : static, requetes sans Authentification  (main.go)
 
-It is not designed to handle large volumes of requests; however, for managing development tools, it is sufficient.
+Renouvellement : changement mot de passe
+- requete renew avec identifiant, mail, sans password
+- envoi un email avec jeton JWT Profil "Renouvellement", avec lien
+- sur appel lien renouvellement : decode, vérifie jeton, modifie  password
 
-Authenticated web sessions are stored in a JWT cookie. API access is handled by tokens within each tool behind the reverse proxy.
 
-## Build
-With static libraries: 
-- CGO_ENABLED=0 go build -o proxy.bin
+glue
 
-Full update
-- go get -u all
-- go mod tidy
+in
+  ldap
+  sql
+  rest webhooks
 
-## Install
-/example
-* proxy.bin : executable
-* proxy.yml : configuration
-* certificates and key : for HTTPS clients, server
+out
+ x ldap
+  sql
+  rest webhooks
 
-## Supervision
-/healthz/live
-/healthz/ready
+xsso
+x  openidconnect
 
-## Usage
-Depending on the proxy.yml configuration, the available endpoints are:
+gui
 
-For OIDC tools
-* https://myhost/frontal/login
-* https://myhost/frontal/logout
-* https://myhost/frontal/callback  
-  
-For end users
-* https://myhost/tools1/…
-* https://myhost/tools2/…
-* https://myhost/tools3/…
-* https://myhost/tools4/…  
-  
-For supervision  (kubernetes)
-* https://myhost/healthz/ready
-* https://myhost/healthz/live
+x  login form
+  droits correspondances
+  create user form
+  remove user batch
+  create and remove project 
+  logout chains
+  batch incoherence, password expiration
+  ldap edit
 
-# Configuration 
-
-Into proxy.yml, current workdir
-
-```yaml
-# Http Service 
-proxy:
-  listenip: 0.0.0.0
-  port: "8443"
-  protocol: https
-  certfile: server-chain.crt
-  keyfile: server.key
-  usedurl: https://localhost
-  tokensecret: MonPrecieux 
-  agecookie: session           # or age in seconds 43200=12h
-  userheader : REMOTE_USER
-  contextpath : "/frontal"     # for oidc endpoints
-  
-# Auth Openid connect
-openidc:
-  active: false
-  issuer: https://localhost/oidc     # /.well-known/openid-configuration
-  ident: frontal
-  secret: lusseaux
-  loginpath: /frontal/login
-  callback: https://localhost/frontal/callback
-  #postlogout: https://localhost/agrem/vue/home
-  frontlogout: https://localhost/frontal/logout
-  scope: [ "openid", "profile", "email", "role" ]  
-  authmethod: query     # or fragment or form_post 
-  uidfield: sub         # or preferred_username
-  rootca: rootCA.pem
-
-backends:    ## Proxy list , in order 
-  - host : "*.local.loc"
-    path : "/example/"
-    url : "http://back.loc:8080/example/"
-  - path : "/mantis/"
-    url : "http://localhost:8086/mantis/"
-  - path : "/client/"
-    url : "https://agrem.loc:8008/client/"
-  - path : "/oidc/"
-    url : "https://agrem.loc:8008/oidc/"
-
-locations:   ## Filter list , in order 
-  - path : "/exemple/ici/logo.png"
-    phfile : "./files/mon-logo.png"      # place holder file
-  - path : "/openproject/form/login"
-    execjs : "autom_login.js"            # ex: do  Get login + post login with user/pass from oidc
-  - path : "/example"
-    auth : true                         # require authentification (on oidc provider)
-    users : "admin,other"               # only usernames authorized
-    iplist : "10.57.0.0/8|10.57.1.45"   # only source ip range authorized
-```
+front apache proxy
+  mod_openid
