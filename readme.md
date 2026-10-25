@@ -102,7 +102,7 @@ proxy:
   certfile: ./custom/server-chain.crt
   keyfile: ./custom/server.key
   usedurl: https://localhost:8443
-  tokensecret: MonPrecieux 
+  tokensecret: ************ 
   agecookie: session  # or age in seconds 43200=12h
   userheader : X-Forwarded-User
   resourcespath : "/resources/"
@@ -113,7 +113,7 @@ openidc:
   active: true
   issuer: http://localhost:8008/oidc # /.well-known/openid-configuration
   ident: frontal
-  secret: lusseaux
+  secret: *************
   loginpath: /frontal/login
   callback: https://localhost:8443/frontal/callback
   frontlogout: https://localhost:8443/frontal/logout
@@ -124,9 +124,12 @@ openidc:
 
 # Proxifications
 backends:
-  # for tests
-  - path : "/mantis/api/soap/"
-    url : "http://localhost:8099/notbind/"
+  - path : "/nexus/"
+    url : "http://localhost:8081/nexus/"
+  - path : "/v2/mydocker/"
+    url : "http://localhost:8092/v2/mydocker/"
+  - path : "/v2/"
+    url : "http://localhost:8091/v2/"
   - path : "/mantis/"
     url : "http://localhost:8086/mantis/"
   - path : "/openproject/"
@@ -141,28 +144,18 @@ backends:
 
 # Filtering, Automation
 locations:
-  # for tests
-  - path : "/mantis/login_password_page.php"
-    iplist : "10.57.0.0/8 | 10.57.1.45" 
-  - path : "/mantis/images/favicon.ico"
-    iplist : "10.57.0.0/8 | 10.57.1.45 | ::1/128 | 127.0.0.1/32" 
-  - path : "/mantis/index.php"
+  - path : "/nexus/registry"
+    auth : false
+  - path : "/nexus/service/rest/"
+    auth : false 
+  - path : "/nexus/"
     auth : true
-    users : "administrator | other"
-  - path : "/mantis/mantis_offline.php"
-    phfile : "./resources/toolsbox.jpeg"
-  - path : "/mantis/dummy/in_out.html"
-    execjs : "./custom/in_out.js"
-  - path : "/mantis/dummy/rest_call.html"
-    execjs : "./custom/rest_call.js"
-  - path : "/mantis/dummy/ldap_call.html"
-    execjs : "./custom/ldap_call.js"
-  - path : "/mantis/dummy/error.html"
-    execjs : "./custom/error.js"
-  - path : "/mantis/login_page.php"
-    execjs : "./custom/autologin.js"
-  - path : "/mantis/logout_page.php"
-    content : !!binary RGlzY29ubmVjdGVkIQ==  # Disconnected! en base64
+  - path : "/openproject/assets/logo_openproject_white_big-2c...a1.png"
+    phfile : "./resources/mylogo.png"
+  - path : "/openproject/login"
+    auth: true
+    execjs : "./custom/op_autologin.js"
+
   #- path : "/example"
   #  auth : true
   #  users : "admin,other"
@@ -231,7 +224,7 @@ backends:
 locations:
   - path : "/openproject/login"
     auth: true
-    execjs : "./js/op_autologin.js"
+    execjs : "./custom/op_autologin.js"
 ```
 
 File __op_autologin.js__ :
