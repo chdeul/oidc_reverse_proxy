@@ -1,8 +1,6 @@
 # Reverse Proxy for SSO Openid connect
 
-__Coming soon ...__
-
-This Golang application is used to:
+This __Golang__ application is used to:
 
 * centralize tools on a single entry point (front end)
 * dispatch requests (paths) to the different tools
@@ -13,17 +11,17 @@ This Golang application is used to:
 * restrict some paths to blank list of users
 * handle the HTTPS protocol and certificate at the front end
 * customize or patch css, js, image, html requests
-* automate a basic login, custom filtering
+* automate a basic login (POST formdata), custom filtering
 * automate centralized logout
   
 Thus, tools that do not natively support openidconnect management for free (for example Sonatype Nexus OSS, Openproject, ...) can rely on this proxy, a SSO and a LDAP to manage their web authentication in openidconnect mode, according to the following diagram:
 
 ```mermaid
 graph TD;
-    Navigateur --> Reverse-Proxy;
-    Reverse-Proxy -.->|jwt| Navigateur;
+    Browser --> Reverse-Proxy;
+    Reverse-Proxy -.->|jwt| Browser;
     Reverse-Proxy -.->|login| SSO;
-    Reverse-Proxy --+id-user--> Nexus-OSS; 
+    Reverse-Proxy --+username--> Nexus-OSS; 
     Reverse-Proxy --token-api--> Nexus-OSS;   
     Nexus-OSS --> Openldap;
     SSO --> Openldap
@@ -38,6 +36,7 @@ It is not designed to handle large volumes of requests; however, for managing de
 Authenticated web sessions are stored in a JWT cookie. API access is handled by tokens within each tool behind the reverse proxy.
 
 ## Build
+
 With static libraries: 
 - CGO_ENABLED=0 go build -o proxy.bin
 
@@ -45,14 +44,32 @@ Full update
 - go get -u all
 - go mod tidy
 
+## Dependencies 
+
+* Golang      ( Go Language development )
+* Zitadel V3  ( Oauth2 OIDC library )
+* Goja        ( Go/javascript runtime )
+* Ldap V3 
+* Yaml V4
+* Jwt V3
+
+## Test
+
+Test with Zitadel OIDC Provider and Gitlab OIDC Provider
+Test with Mantis-BT , Nexus-OSS and Openproject Clients
+
 ## Install
+
 /example
 * proxy.bin : executable
 * proxy.yml : configuration
-* certificates and key : for HTTPS clients, server
-* mount volume for custom configuration files
+* custom / certificates and key : for HTTPS clients, server
+* custom / js files : for HTTPS clients, server
+* resources / static css, img ... provided by web proxy
+* note : on docker , mount volume for custom configuration files
 
-## Usage
+## Endpoints
+
 Depending on the proxy.yml configuration, the available endpoints are:
 
 For OIDC tools
@@ -81,65 +98,170 @@ proxy:
   listenip: 0.0.0.0
   port: "8443"
   protocol: https
-  certfile: server-chain.crt
-  keyfile: server.key
-  usedurl: https://localhost
+  certfile: ./custom/server-chain.crt
+  keyfile: ./custom/server.key
+  usedurl: https://localhost:8443
   tokensecret: MonPrecieux 
-  agecookie: session           # or age in seconds 43200=12h
-  userheader : REMOTE_USER
-  contextpath : "/frontal"     # for oidc endpoints
-  
+  agecookie: session  # or age in seconds 43200=12h
+  userheader : X-Forwarded-User
+  resourcespath : "/resources/"
+  trace : false
+
 # Auth Openid connect
 openidc:
-  active: false
-  issuer: https://localhost/oidc     # /.well-known/openid-configuration
+  active: true
+  issuer: http://localhost:8008/oidc # /.well-known/openid-configuration
   ident: frontal
   secret: lusseaux
   loginpath: /frontal/login
-  callback: https://localhost/frontal/callback
-  #postlogout: https://localhost/agrem/vue/home
-  frontlogout: https://localhost/frontal/logout
+  callback: https://localhost:8443/frontal/callback
+  frontlogout: https://localhost:8443/frontal/logout
   scope: [ "openid", "profile", "email", "role" ]  
-  authmethod: query     # or fragment or form_post 
-  uidfield: sub         # or preferred_username
-  rootca: rootCA.pem
+  authmethod: query   # or fragment or form_post 
+  uidfield: sub       # or preferred_username
+  rootca: ./custom/rootCA.pem
 
-backends:    ## Proxy list , in order 
-  - host : "*.local.loc"
-    path : "/example/"
-    url : "http://back.loc:8080/example/"
+backends:
+  # for tests
+  - path : "/mantis/api/soap/"
+    url : "http://localhost:8099/notbind/"
   - path : "/mantis/"
     url : "http://localhost:8086/mantis/"
+  - path : "/openproject/"
+    url : "http://localhost:8080/openproject/"
   - path : "/client/"
-    url : "https://agrem.loc:8008/client/"
+    url : "http://localhost:8008/client/"
   - path : "/oidc/"
-    url : "https://agrem.loc:8008/oidc/"
+    url : "http://localhost:8008/oidc/"
+  #- host : "*.local.loc"
+  #  path : "/example/"
+  #  url : "http://back.loc:8080/example/"
 
-locations:   ## Filter list , in order 
-  - path : "/exemple/ici/logo.png"
-    phfile : "./files/mon-logo.png"      # place holder file
-  - path : "/openproject/form/login"
-    execjs : "./js/autom_login.js"       # ex: do  Get login + post login with user from oidc
-  - path : "/example"
-    auth : true                         # require authentification (on oidc provider)
-    users : "admin,other"               # only usernames authorized
-    iplist : "10.57.0.0/8|10.57.1.45"   # only source ip range authorized
+locations:
+  # for tests
+  - path : "/mantis/login_password_page.php"
+    iplist : "10.57.0.0/8 | 10.57.1.45" 
+  - path : "/mantis/images/favicon.ico"
+    iplist : "10.57.0.0/8 | 10.57.1.45 | ::1/128 | 127.0.0.1/32" 
+  - path : "/mantis/index.php"
+    auth : true
+    users : "administrator | other"
+  - path : "/mantis/mantis_offline.php"
+    phfile : "./resources/toolsbox.jpeg"
+  - path : "/mantis/dummy/in_out.html"
+    execjs : "./custom/in_out.js"
+  - path : "/mantis/dummy/rest_call.html"
+    execjs : "./custom/rest_call.js"
+  - path : "/mantis/dummy/ldap_call.html"
+    execjs : "./custom/ldap_call.js"
+  - path : "/mantis/dummy/error.html"
+    execjs : "./custom/error.js"
+  - path : "/mantis/login_page.php"
+    execjs : "./custom/autologin.js"
+  - path : "/mantis/logout_page.php"
+    content : !!binary RGlzY29ubmVjdGVkIQ==  # Disconnected! en base64
+  #- path : "/example"
+  #  auth : true
+  #  users : "admin,other"
+  #  iplist : "10.57.0.0/8|10.57.1.45" 
+  #  content : "SGVsbG8sIFdvcmxkIQ=="  # Hello, world ! en base64
+  #  phfile : "logo.png" 
+  #  execjs : "auth.js"
 ```
 
 # Customisation
 
-#### Exemple 1 
+### Example 1 
 
-Login with RuthRealm  for Sonatype Nexus OSS 
+Login with Rut Realm (Http Header Auth) for Sonatype Nexus OSS 
+* Config nexus auth with rut realm , and Rut capability : X-Forwarded-User
+* Config ldap nexus on same as ldap as oidc provider 
+* Config proxy userheader : X-Forwarded-User
+* Config Nexus on port 8081, 
+* For docker registry , docker group registry on port 8091, docker hosted mydocker on port 8092
 
-#### Example 2 
+```
+backends:
+  - path : "/nexus/"
+    url : "http://localhost:8081/nexus/"
+  - path : "/v2/mydocker/"
+    url : "http://localhost:8092/v2/mydocker/"
+  - path : "/v2/"
+    url : "http://localhost:8091/v2/"
+
+locations:
+  - path : "/nexus/registry"
+    auth : false
+  - path : "/nexus/service/rest/"
+    auth : false 
+  - path : "/nexus/"
+    auth : true
+```
+
+### Example 2 
 
 Change logo of a free instance of Openproject
 
-#### Exemple 3
+```
+  - path : "/openproject/assets/logo_openproject_white_big-2c...a1.png"
+    phfile : "./resources/mylogo.png"
+```
+
+Difficulty : path to update at each openproject update.
+
+### Example 3
 
 Login with sso oidc for a free instance of OpenProject
 
-#### Exemple 4 
+requirements:
+* openproject free installed with context   --env RAILS_RELATIVE_URL_ROOT=/openproject 
+* all users created with FIXED complex password ( the same for all ), just admin is able to create users
+* admin user  with its own password ( for security : he must authenticate 1st in sso & 2nd in native openproject )
+* an openid provider installed as sso , and configured into this proxy
 
-Logout all of tools  
+```
+backends:
+  - path : "/openproject/"
+    url : "http://localhost:8080/openproject/"
+
+locations:
+  - path : "/openproject/login"
+    auth: true
+    execjs : "./js/op_autologin.js"
+```
+
+File op_autologin.js :
+```
+const password = "xxxxxxxxxx"
+
+function jsexec()
+{
+   // On Get Openproject Login  ==> get login req id  + rewrite to Post login, with form-data to authenticate
+   if ( Remote_User !== "admin" && Method == "GET" && Backend_URL.endsWith("/login") ) {
+
+        // Use frontend url, not backend url , because strict controls of openproject !
+        const page = httpCall(Method, "https://localhost:8443/openproject/login", "", "", Cookie) 
+
+        // Find into login page the hidden request id
+        const pos = page.indexOf('<input type="hidden" name="authenticity_token" value="');
+        const fin = page.indexOf('"',pos+54)
+        const reqid = page.substring(pos+54,fin);
+
+        // formdata to authentication 
+        const fdata = "authenticity_token=" + reqid + "&username=" + Remote_User + "&password=" + password
+
+        // Transform Get login to immediate Post login, with form data
+        return ({     
+                    "Method": "POST",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Body": fdata   
+                    // Content-length : auto
+                })
+    }
+    // Else Normal proxified Request
+    return ({ })
+}
+
+// Return to golang
+jsexec()
+```

@@ -1,0 +1,47 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Folders
+_obj
+_test
+.idea
+.vscode/
+
+# Test binary, built with `go test -c`
+*.test
+_testmain.go
+
+# Go workspace file
+go.work
+go.work.sum
+
+*.exe
+*.test
+*.prof
+*.bin
+*.pem
+*.crt
+*.key
+*.log
+
+node_modules
+/dist
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
