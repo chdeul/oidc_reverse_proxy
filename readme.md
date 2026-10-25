@@ -55,7 +55,7 @@ Full update
 
 ## Test
 
-Test with Zitadel OIDC Provider and Gitlab OIDC Provider
+Test with Zitadel OIDC Provider and Gitlab OIDC Provider  
 Test with Mantis-BT , Nexus-OSS and Openproject Clients
 
 ## Install
@@ -64,11 +64,12 @@ Test with Mantis-BT , Nexus-OSS and Openproject Clients
 * proxy.bin : executable
 * proxy.yml : configuration
 * custom / certificates and key : for HTTPS clients, server
-* custom / js files : for HTTPS clients, server
+* custom / js files : for automation, patch, custom filtering
 * resources / static css, img ... provided by web proxy
-* note : on docker , mount volume for custom configuration files
+* note : on docker, mount volume for custom configuration files
+* note : TODO on docker, some ENV variables
 
-## Endpoints
+## Http Endpoints
 
 Depending on the proxy.yml configuration, the available endpoints are:
 
@@ -84,13 +85,13 @@ For end users
 * https://myhost/tools4/…  
 * https://myhost/resources/…
 
-For supervision  (kubernetes)
+For supervision 
 * https://myhost/healthz/ready
 * https://myhost/healthz/live
 
 # Configuration 
 
-Into proxy.yml, current workdir
+Into proxy.yml, localized into current workdir of processus
 
 ```yaml
 # Http Service 
@@ -121,6 +122,7 @@ openidc:
   uidfield: sub       # or preferred_username
   rootca: ./custom/rootCA.pem
 
+# Proxifications
 backends:
   # for tests
   - path : "/mantis/api/soap/"
@@ -137,6 +139,7 @@ backends:
   #  path : "/example/"
   #  url : "http://back.loc:8080/example/"
 
+# Filtering, Automation
 locations:
   # for tests
   - path : "/mantis/login_password_page.php"
@@ -165,8 +168,8 @@ locations:
   #  users : "admin,other"
   #  iplist : "10.57.0.0/8|10.57.1.45" 
   #  content : "SGVsbG8sIFdvcmxkIQ=="  # Hello, world ! en base64
-  #  phfile : "logo.png" 
-  #  execjs : "auth.js"
+  #  phfile : "./resources/logo.png" 
+  #  execjs : "./custom/auth.js"
 ```
 
 # Customisation
@@ -178,7 +181,8 @@ Login with Rut Realm (Http Header Auth) for Sonatype Nexus OSS
 * Config ldap nexus on same as ldap as oidc provider 
 * Config proxy userheader : X-Forwarded-User
 * Config Nexus on port 8081, 
-* For docker registry , docker group registry on port 8091, docker hosted mydocker on port 8092
+* For docker registry , a docker group registry on port 8091, a docker hosted "mydocker" on port 8092
+* ( docker pull localhost/... , docker push localhost/mydocker/... )
 
 ```
 backends:
@@ -211,13 +215,13 @@ Difficulty : path to update at each openproject update.
 
 ### Example 3
 
-Login with sso oidc for a free instance of OpenProject
+Login with sso oidc provider for a free instance of OpenProject
 
 requirements:
 * openproject free installed with context   --env RAILS_RELATIVE_URL_ROOT=/openproject 
-* all users created with FIXED complex password ( the same for all ), just admin is able to create users
+* all users created with FIXED complex password in openproject ( the same for all ), just admin is able to create users
 * admin user  with its own password ( for security : he must authenticate 1st in sso & 2nd in native openproject )
-* an openid provider installed as sso , and configured into this proxy
+* an openid provider installed as sso , and configured into this proxy : it manages the centralized credentials
 
 ```
 backends:
@@ -230,27 +234,28 @@ locations:
     execjs : "./js/op_autologin.js"
 ```
 
-File op_autologin.js :
+File __op_autologin.js__ :
 ```
-const password = "xxxxxxxxxx"
+const password = "xxxxxxxxxx"  // The all users password in openproject, known only by admin
+                               // the true user password is in oidc provider annuary 
 
 function jsexec()
 {
-   // On Get Openproject Login  ==> get login req id  + rewrite to Post login, with form-data to authenticate
+   // On Get Openproject Login  ==> get login req id (csrf) + rewrite to Post login, with form-data to authenticate
    if ( Remote_User !== "admin" && Method == "GET" && Backend_URL.endsWith("/login") ) {
 
-        // Use frontend url, not backend url , because strict controls of openproject !
-        const page = httpCall(Method, "https://localhost:8443/openproject/login", "", "", Cookie) 
+        // Use frontend url to get login page, not backend url , because strict controls of openproject !
+        const page = httpCall(Method, Frontend_URL, "", "", Cookie) 
 
-        // Find into login page the hidden request id
+        // Find into login page the hidden request id  ( csrf security )
         const pos = page.indexOf('<input type="hidden" name="authenticity_token" value="');
         const fin = page.indexOf('"',pos+54)
         const reqid = page.substring(pos+54,fin);
 
-        // formdata to authentication 
+        // Create formdata to automate authentication 
         const fdata = "authenticity_token=" + reqid + "&username=" + Remote_User + "&password=" + password
 
-        // Transform Get login to immediate Post login, with form data
+        // Transform the initial Get login to immediate Post login, with form data  (Automation: no login page displayed)
         return ({     
                     "Method": "POST",
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -258,7 +263,7 @@ function jsexec()
                     // Content-length : auto
                 })
     }
-    // Else Normal proxified Request
+    // Else Normal proxified Request  ( for admin login page will be displayed for 2nd auth level )
     return ({ })
 }
 
