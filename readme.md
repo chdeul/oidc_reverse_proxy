@@ -1,6 +1,6 @@
 # Reverse Proxy for SSO Openid connect
 
-This __Go__ application main feature is be to $\color{red}{\large{simple\ to\ configure}}$, and it is used to:
+This __Go__ application main feature is to be $\color{red}{\large{simple\ to\ configure}}$, and it is used to:
 
 * Centralize tools on a single entry point (front end)
 * Dispatch requests (paths) to the different tools
