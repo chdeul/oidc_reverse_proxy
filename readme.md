@@ -20,11 +20,11 @@ Thus, tools that do not support natively openidconnect management for free (for 
 graph TD;
     Browser --> Reverse-Proxy;
     Reverse-Proxy -.->|jwt| Browser;
-    Reverse-Proxy -.->|login| SSO;
+    Reverse-Proxy -.->|login| SSO-Oidc;
     Reverse-Proxy --+username--> Nexus-OSS; 
     Reverse-Proxy --token-api--> Nexus-OSS;   
     Nexus-OSS --> Openldap;
-    SSO --> Openldap
+    SSO-Oidc --> Openldap
     style Reverse-Proxy fill:#fec,stroke:#222,stroke-width:3px
 ```
 
