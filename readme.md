@@ -1,20 +1,20 @@
 # Reverse Proxy for SSO Openid connect
 
-This __Golang__ application is used to:
+This __Golang__ application main feature is be to $\color{red}{\text{simple}}$, and it is used to:
 
-* centralize tools on a single entry point (front end)
-* dispatch requests (paths) to the different tools
-* authenticate some “paths” using openidconnect
-* transmit the user identifier to the tool in the request header
-* let other paths through without handling authentication (for APIs)
-* filter some “paths” based on incoming IP addresses
-* restrict some paths to blank list of users
-* handle the HTTPS protocol and certificate at the front end
-* customize or patch css, js, image, html requests
-* automate a basic login (POST formdata), custom filtering
-* automate centralized logout
+* Centralize tools on a single entry point (front end)
+* Dispatch requests (paths) to the different tools
+* Authenticate some “paths” using openidconnect
+* Transmit the user identifier to the tool in the request header
+* Let other paths through without handling authentication (for APIs)
+* Filter some “paths” based on incoming IP addresses
+* Restrict some paths to blank list of users
+* Handle the HTTPS protocol and certificate at the front end
+* Customize or patch css, js, image, html requests
+* Automate a basic login (POST formdata), custom filtering
+* Automate centralized logout
   
-Thus, tools that do not natively support openidconnect management for free (for example Sonatype Nexus OSS, Openproject, ...) can rely on this proxy, a SSO and a LDAP to manage their web authentication in openidconnect mode, according to the following diagram:
+Thus, tools that do not support natively openidconnect management for free (for example Sonatype Nexus OSS, Openproject, ...) can rely on this proxy, a SSO and a LDAP to manage their web authentication in openidconnect mode, according to the following diagram:
 
 ```mermaid
 graph TD;
@@ -25,11 +25,12 @@ graph TD;
     Reverse-Proxy --token-api--> Nexus-OSS;   
     Nexus-OSS --> Openldap;
     SSO --> Openldap
+    style Reverse-Proxy fill:#fec,stroke:#222,stroke-width:3px
 ```
 
 API-mode access (npm, maven, docker, etc.) to Nexus-OSS is handled by an API token created and controlled within Nexus.
 
-This SSO reverse proxy is simpler to configure and deploy than an Apache2 Httpd with OIDC modules, or Nginx, or LemonLdap, etc.
+This SSO reverse proxy is simpler to configure and deploy than an Apache2 Httpd with OIDC modules, or Nginx, or LemonLdap module, etc.
 
 It is not designed to handle large volumes of requests; however, for managing development tools, it is sufficient.
 
@@ -144,7 +145,7 @@ backends:
 
 # Filtering, Automation
 locations:
-  - path : "/nexus/registry"
+  - path : "/nexus/registry/"
     auth : false
   - path : "/nexus/service/rest/"
     auth : false 
@@ -158,11 +159,12 @@ locations:
 
   #- path : "/example"
   #  auth : true
-  #  users : "admin,other"
+  #  users : "admin|other"
   #  iplist : "10.57.0.0/8|10.57.1.45" 
   #  content : "SGVsbG8sIFdvcmxkIQ=="  # Hello, world ! en base64
   #  phfile : "./resources/logo.png" 
   #  execjs : "./custom/auth.js"
+  #  note, the 3 last parameters are exclusive each others
 ```
 
 # Customisation
@@ -256,7 +258,7 @@ function jsexec()
                     // Content-length : auto
                 })
     }
-    // Else Normal proxified Request  ( for admin login page will be displayed for 2nd auth level )
+    // Else Normal proxified Request  ( for admin, login page will be displayed for 2nd auth level )
     return ({ })
 }
 
