@@ -11,6 +11,7 @@ This __Golang__ application main feature is be to $\color{red}{\text{simple}}$, 
 * Restrict some paths to blank list of users
 * Handle the HTTPS protocol and certificate at the front end
 * Customize or patch css, js, image, html requests
+* Serve itself some web static ressources
 * Automate a basic login (POST formdata), custom filtering
 * Automate centralized logout
   
