@@ -168,6 +168,24 @@ locations:
   #  note, the 3 last parameters are exclusive each others
 ```
 
+# Env Variables
+
+These environment variables may be set to overwrite the corresponding config files values :
+
+- USED_URL   &nbsp; &nbsp; &nbsp;    client url to access front proxy
+-	RESOURCES_PATH   &nbsp; &nbsp; &nbsp;   context path to access local ressources
+-	TRACE   &nbsp; &nbsp; &nbsp;  TRUE : logging trace, FALSE or not
+-	CERT_FILE   &nbsp; &nbsp; &nbsp;   server https proxy certificates
+- AGE_COOKIE  &nbsp; &nbsp; &nbsp;  session or age in seconds (43200=12h)
+- USER_HEADER   &nbsp; &nbsp; &nbsp;  name of http Header of logged username
+
+-	OIDC_ISSUER   &nbsp; &nbsp; &nbsp;   oidc provider configuration
+-	OIDC_IDENT
+-	OIDC_SECRET
+-	OIDC_AUTH_METHOD
+-	OIDC_UID_FIELD
+-	OIDC_ROOT_CA
+
 # Customisation
 
 ### Example 1 

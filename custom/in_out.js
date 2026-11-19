@@ -27,6 +27,8 @@ function execjs()
         incoming += "Body: " + Body + "<br>"
         incoming += "</p></body></html>"
 
+        println( "log trace ", Frontend_URL )
+        
         // retourne des datas directement
         return ({ "Data" : incoming, "Code" : 200 })
     }

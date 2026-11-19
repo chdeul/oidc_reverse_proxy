@@ -63,6 +63,8 @@ func LoadProxyConfig(dir string) error {
 		fmt.Println("Fichier config erroné : ", err)
 		return err
 	}
+	// Preference to env variables
+	loadEnvironment()
 	return err
 }
 
@@ -79,4 +81,56 @@ func LoadAnyConfig(filepath string, ptr any) error {
 		return err
 	}
 	return err
+}
+
+func loadEnvironment() {
+
+	v := os.Getenv("USED_URL")
+	if v != "" {
+		Cfg.Proxy.UsedUrl = v
+	}
+	v = os.Getenv("RESOURCES_PATH")
+	if v != "" {
+		Cfg.Proxy.ResourcesPath = v
+	}
+	v = os.Getenv("TRACE")
+	if v != "" {
+		Cfg.Proxy.Trace = (v == "TRUE")
+	}
+	v = os.Getenv("CERT_FILE")
+	if v != "" {
+		Cfg.Proxy.CertFile = v
+	}
+	v = os.Getenv("AGE_COOKIE")
+	if v != "" {
+		Cfg.Proxy.AgeCookie = v
+	}
+	v = os.Getenv("USER_HEADER")
+	if v != "" {
+		Cfg.Proxy.UserHeader = v
+	}
+	v = os.Getenv("OIDC_ISSUER")
+	if v != "" {
+		Cfg.Openidc.Issuer = v
+	}
+	v = os.Getenv("OIDC_IDENT")
+	if v != "" {
+		Cfg.Openidc.Ident = v
+	}
+	v = os.Getenv("OIDC_SECRET")
+	if v != "" {
+		Cfg.Openidc.Secret = v
+	}
+	v = os.Getenv("OIDC_AUTH_METHOD")
+	if v != "" {
+		Cfg.Openidc.AuthMethod = v
+	}
+	v = os.Getenv("OIDC_UID_FIELD")
+	if v != "" {
+		Cfg.Openidc.UidField = v
+	}
+	v = os.Getenv("OIDC_ROOT_CA")
+	if v != "" {
+		Cfg.Openidc.RootCA = v
+	}
 }

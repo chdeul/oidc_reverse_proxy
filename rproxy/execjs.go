@@ -145,6 +145,11 @@ func rewriteRequest(r *http.Request, values map[string]string) (string, int) {
 
 func registerTools(vm *goja.Runtime) {
 
+	// Set function to allow fmt log from js
+	vm.Set("println", func(args ...interface{}) {
+		fmt.Println(args...)
+	})
+
 	// Function to do in js synchronized Http or Ldap Call
 	vm.Set("httpCall",
 
