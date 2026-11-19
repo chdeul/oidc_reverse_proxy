@@ -170,12 +170,12 @@ locations:
 
 # Env Variables
 
-These environment variables may be set to overwrite the corresponding config files values :
+These environment variables may be set to overwrite the corresponding config-file values :
 
 - USED_URL   &nbsp; &nbsp; &nbsp;    client url to access front proxy
 -	RESOURCES_PATH   &nbsp; &nbsp; &nbsp;   context path to access local ressources
 -	TRACE   &nbsp; &nbsp; &nbsp;  TRUE : logging trace, FALSE or not
--	CERT_FILE   &nbsp; &nbsp; &nbsp;   server https proxy certificates
+-	CERT_FILE   &nbsp; &nbsp; &nbsp;   server https proxy certificate
 - AGE_COOKIE  &nbsp; &nbsp; &nbsp;  session or age in seconds (43200=12h)
 - USER_HEADER   &nbsp; &nbsp; &nbsp;  name of http Header of logged username
 
