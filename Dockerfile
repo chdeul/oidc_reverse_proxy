@@ -14,8 +14,20 @@ COPY custom /app/custom
 COPY resources /app/resources
 COPY proxy.yml /app/proxy.yml
 
-# or config VOLUME [ "/app/proxy.yml", "/app/custom", "/app/resources" ]
-# TODO ENV vars to overwrite some useful yaml config : trace, secret, ...
+# Possible ENV variables
+# USED_URL         client url to access front proxy
+# RESOURCES_PATH   context path to access local ressources
+# TRACE            TRUE : logging trace, FALSE or not
+# CERT_FILE        server https proxy certificates
+# AGE_COOKIE       session or age in seconds (43200=12h)
+# USER_HEADER      name of http Header of logged username
+#
+# OIDC_ISSUER      oidc provider configuration
+# OIDC_IDENT
+# OIDC_SECRET
+# OIDC_AUTH_METHOD
+# OIDC_UID_FIELD
+# OIDC_ROOT_CA
 
 RUN chmod +x /app/proxy.bin
 
