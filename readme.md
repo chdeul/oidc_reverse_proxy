@@ -284,3 +284,5 @@ function jsexec()
 // Return to golang
 jsexec()
 ```
+
+> __Important__: this .js file is accessed and executed into proxy server, __not__ in client navigator! There is no special problem of security. Simply, the user running the proxy process and linux access rigths of the file must be well adjust, as all other proxy configuration and resources files.
